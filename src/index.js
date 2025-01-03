@@ -101,7 +101,7 @@ const guiMode = gui
         }
     });
 const guiItem = gui
-    .add(guiHelper, "name", ["01_column", "02_ground", "03_ground", "04_groundKB526", "Aging_building_Straight_retaining_wall", "Aging_building_Straight_retaining_wall_2"])
+    .add(guiHelper, "name", ["01_column", "Aging_building_Straight_retaining_wall", "Aging_building_Straight_retaining_wall_2"])
     .name("GPR Example")
     .onChange((value) => load(value));
 let folderArray = [];
