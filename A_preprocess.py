@@ -71,4 +71,4 @@ process_csv_to_ply("data/01_column.csv", "data/01_column.ply")
 process_csv_to_ply("data/02_ground.csv", "data/02_ground.ply")
 process_csv_to_ply("data/03_ground.csv", "data/03_ground.ply")
 '''
-process_csv_to_ply("public/data/04_groundKB526.csv", "public/data/04_groundKB526.ply")
+process_csv_to_ply("public/data/Aging_building_Straight_retaining_wall_2.csv", "public/data/Aging_building_Straight_retaining_wall_2.ply")
