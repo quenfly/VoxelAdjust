@@ -14,7 +14,7 @@
 		"webpack-dev-server": "^5.1.0"
 	},
 	"scripts": {
-		"build": "npx webpack",
+		"build": "npx webpack build",
 		"start": "npx webpack serve"
 	}
 }
