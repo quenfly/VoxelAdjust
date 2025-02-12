@@ -72,7 +72,4 @@ process_csv_to_ply("data/01_column.csv", "data/01_column.ply")
 process_csv_to_ply("data/02_ground.csv", "data/02_ground.ply")
 process_csv_to_ply("data/03_ground.csv", "data/03_ground.ply")
 '''
-process_csv_to_ply("public/data/Aging_building_Straight_Stair_ground.csv", "public/data/Aging_building_Straight_Stair_ground.ply")
-process_csv_to_ply("public/data/Aging_building_Straight_Stair_side.csv", "public/data/Aging_building_Straight_Stair_side.ply")
-process_csv_to_ply("public/data/Aging_building_Straight_Stair_side_2.csv", "public/data/Aging_building_Straight_Stair_side_2.ply")
-process_csv_to_ply("public/data/Aging_building_Straight_Lintel.csv", "public/data/Aging_building_Straight_Lintel.ply")
+process_csv_to_ply("public/data/05_groundLE3.csv", "public/data/05_groundLE3.ply")
