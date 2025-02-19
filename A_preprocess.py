@@ -72,4 +72,4 @@ process_csv_to_ply("data/01_column.csv", "data/01_column.ply")
 process_csv_to_ply("data/02_ground.csv", "data/02_ground.ply")
 process_csv_to_ply("data/03_ground.csv", "data/03_ground.ply")
 '''
-process_csv_to_ply("public/data/05_groundLE3.csv", "public/data/05_groundLE3.ply")
+process_csv_to_ply("public/data/06_Column533.csv", "public/data/06_Column533.ply")
