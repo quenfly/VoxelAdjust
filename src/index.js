@@ -105,7 +105,7 @@ const guiItem = gui
                                 "Aging_building_Straight_retaining_wall", "Aging_building_Straight_retaining_wall_2",
                                 "Aging_building_Curved_strut", "Aging_building_Stair_ground",
                                 "Aging_building_Stair_side", "Aging_building_Stair_side_2",
-                                "Aging_building_Lintel"])
+                                "Aging_building_Lintel", "Muiwo-1", "Muiwo-2", "Muiwo-3", "Muiwo-4"])
     .name("GPR Example")
     .onChange((value) => load(value));
 let folderArray = [];
