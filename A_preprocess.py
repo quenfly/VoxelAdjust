@@ -68,8 +68,11 @@ def process_csv_to_ply(csv_filename, ply_filename):
 
 # Example usage:
 '''
-process_csv_to_ply("data/01_column.csv", "data/01_column.ply")
+process_csv_to_ply("data/csv-Muiwo-1.csv", "data/csv-Muiwo-1.ply")
 process_csv_to_ply("data/02_ground.csv", "data/02_ground.ply")
 process_csv_to_ply("data/03_ground.csv", "data/03_ground.ply")
 '''
-process_csv_to_ply("public/data/06_Column533.csv", "public/data/06_Column533.ply")
+process_csv_to_ply("public/data/csv-Muiwo-1.csv", "public/data/Muiwo-1.ply")
+process_csv_to_ply("public/data/csv-Muiwo-2.csv", "public/data/Muiwo-2.ply")
+process_csv_to_ply("public/data/csv-Muiwo-3.csv", "public/data/Muiwo-3.ply")
+process_csv_to_ply("public/data/csv-Muiwo-4.csv", "public/data/Muiwo-4.ply")
