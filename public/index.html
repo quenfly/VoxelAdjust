@@ -130,6 +130,39 @@
                 }
             }
         </style>
+        <style>
+            #myOverlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 9999;
+                justify-content: center;
+                align-items: center;
+            }
+        
+            #myOverlayContent {
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                padding: 24px 16px 16px 16px;
+                text-align: justify;
+                max-width: 90vw;
+                max-height: 80vh;
+            }
+        
+            #myOverlayContent img {
+                max-width: 100%;
+                height: auto;
+                margin-top: 10px;
+                border-radius: 4px;
+            }
+        </style>
     </head>
     <body style="margin: 0px; overflow: hidden">
         <div id="info">
@@ -190,6 +223,13 @@
                 <span id="upperBoundValue">100</span>
             </div>
         </div>
+<div id="myOverlay">
+    <div id="myOverlayContent">
+        <div>这是描述文本，可以写任何说明内容。</div>
+        <img src="https://via.placeholder.com/250x150.png?text=示例图片" alt="示例图片">
+    </div>
+</div>
+
         <div id="threed-container"></div>
         <script type="module" src="/bundle.js"></script>
     </body>

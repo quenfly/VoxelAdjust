@@ -5,6 +5,112 @@ import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import * as THREEx from "@ar-js-org/ar.js/three.js/build/ar-threex.js";
 
+const file_content = [
+    {
+        name: "01_column",
+        url: "./data/01_column.ply",
+        description:
+            "Ground-penetrating radar (GPR) is a non-invasive geophysical method that uses radar pulses to image the subsurface, helping to locate buried objects and map underground features without disturbing the ground. It is commonly used in fields like archaeology, construction, and environmental studies to detect utilities, geological changes, and unmarked graves.",
+        image: "./image/20250416_105229.JPG",
+    },
+    {
+        name: "02_ground",
+        url: "./data/02_ground.ply",
+        description: "11111111111111111111111111111111111111111",
+        image: "",
+    },
+    {
+        name: "03_ground",
+        url: "./data/03_ground.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "04_groundKB526",
+        url: "./data/04_groundKB526.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "05_groundLE3",
+        url: "./data/05_groundLE3.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "06_Column533",
+        url: "./data/06_Column533.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Aging_building_Straight_retaining_wall",
+        url: "./data/Aging_building_Straight_retaining_wall.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Aging_building_Straight_retaining_wall_2",
+        url: "./data/Aging_building_Straight_retaining_wall_2.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Aging_building_Curved_strut",
+        url: "./data/Aging_building_Curved_strut.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Aging_building_Stair_ground",
+        url: "./data/Aging_building_Stair_ground.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Aging_building_Stair_side",
+        url: "./data/Aging_building_Stair_side.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Aging_building_Stair_side_2",
+        url: "./data/Aging_building_Stair_side_2.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Aging_building_Lintel",
+        url: "./data/Aging_building_Lintel.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Muiwo-1",
+        url: "./data/Muiwo-1.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Muiwo-2",
+        url: "./data/Muiwo-2.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Muiwo-3",
+        url: "./data/Muiwo-3.ply",
+        description: "",
+        image: "",
+    },
+    {
+        name: "Muiwo-4",
+        url: "./data/Muiwo-4.ply",
+        description: "",
+        image: "",
+    },
+];
+
 const sliderTrack = document.querySelector(".slider-track");
 const lowerHandle = document.getElementById("lowerHandle");
 const upperHandle = document.getElementById("upperHandle");
@@ -89,8 +195,32 @@ markerRoot = new THREE.Group();
 camera = new THREE.Camera();
 
 // GUI setup
+
+const overlayDescription = document.getElementById("myOverlay");
+const overlayContent = document.getElementById("myOverlayContent");
+overlayDescription.onclick = function () {
+    overlayDescription.style.display = "none";
+};
+overlayContent.onclick = function (event) {
+    event.stopPropagation();
+    overlayDescription.style.display = "none";
+};
+
+let selected_description = "";
+let selected_image = "";
 const gui = new GUI();
-const guiHelper = { mode: "Visualize mode", name: "Select File" };
+const guiHelper = {
+    mode: "Visualize mode",
+    name: "Select File",
+    showDescription: function () {
+        if (!selected_description) return;
+        overlayDescription.style.display = "flex";
+        overlayContent.innerHTML = selected_description;
+        if (selected_image) {
+            overlayContent.innerHTML += `<br><br><img src="${selected_image}" alt="Image" style="width: 60%; height: auto;">`;
+        }
+    },
+};
 const guiMode = gui
     .add(guiHelper, "mode", ["Normal", "AR"])
     .onChange((value) => {
@@ -101,13 +231,16 @@ const guiMode = gui
         }
     });
 const guiItem = gui
-    .add(guiHelper, "name", ["01_column", "02_ground", "03_ground", "04_groundKB526", "05_groundLE3", "06_Column533",
-                                "Aging_building_Straight_retaining_wall", "Aging_building_Straight_retaining_wall_2",
-                                "Aging_building_Curved_strut", "Aging_building_Stair_ground",
-                                "Aging_building_Stair_side", "Aging_building_Stair_side_2",
-                                "Aging_building_Lintel", "Muiwo-1", "Muiwo-2", "Muiwo-3", "Muiwo-4"])
+    .add(
+        guiHelper,
+        "name",
+        file_content.map((item) => item.name)
+    )
     .name("GPR Example")
     .onChange((value) => load(value));
+const guiDescription = gui
+    .add(guiHelper, "showDescription")
+    .name("Show Description");
 let folderArray = [];
 // GUI setup
 
@@ -179,7 +312,15 @@ renderer.domElement.style.left = "0px";
 // document.body.appendChild(renderer.domElement);
 
 function load(name) {
-    loader.load(`./data/${name}.ply`, function (plyGeometry) {
+    // find url using name
+    const file = file_content.find((item) => item.name === name);
+
+    if (!file || !file.url) {
+        console.error("File not found:", name);
+        return;
+    }
+
+    loader.load(file.url, function (plyGeometry) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute(
             "position",
@@ -430,6 +571,9 @@ function load(name) {
                 planeFolder.open();
                 folderArray.push(planeFolder);
             });
+
+            selected_description = file.description;
+            selected_image = file.image;
         }
     });
 }
