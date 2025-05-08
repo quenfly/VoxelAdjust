@@ -12,102 +12,119 @@ const file_content = [
         description:
             "Ground-penetrating radar (GPR) is a non-invasive geophysical method that uses radar pulses to image the subsurface, helping to locate buried objects and map underground features without disturbing the ground. It is commonly used in fields like archaeology, construction, and environmental studies to detect utilities, geological changes, and unmarked graves.",
         image: "./image/20250416_105229.JPG",
+        bounds: [60, 90],
     },
     {
         name: "02_ground",
         url: "./data/02_ground.ply",
         description: "11111111111111111111111111111111111111111",
         image: "",
+        bounds: [50, 60],
     },
     {
         name: "03_ground",
         url: "./data/03_ground.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "04_groundKB526",
         url: "./data/04_groundKB526.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "05_groundLE3",
         url: "./data/05_groundLE3.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "06_Column533",
         url: "./data/06_Column533.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Aging_building_Straight_retaining_wall",
         url: "./data/Aging_building_Straight_retaining_wall.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Aging_building_Straight_retaining_wall_2",
         url: "./data/Aging_building_Straight_retaining_wall_2.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Aging_building_Curved_strut",
         url: "./data/Aging_building_Curved_strut.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Aging_building_Stair_ground",
         url: "./data/Aging_building_Stair_ground.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Aging_building_Stair_side",
         url: "./data/Aging_building_Stair_side.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Aging_building_Stair_side_2",
         url: "./data/Aging_building_Stair_side_2.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Aging_building_Lintel",
         url: "./data/Aging_building_Lintel.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Muiwo-1",
         url: "./data/Muiwo-1.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Muiwo-2",
         url: "./data/Muiwo-2.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Muiwo-3",
         url: "./data/Muiwo-3.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
     {
         name: "Muiwo-4",
         url: "./data/Muiwo-4.ply",
         description: "",
         image: "",
+        bounds: [0, 100],
     },
 ];
 
@@ -319,6 +336,10 @@ function load(name) {
         console.error("File not found:", name);
         return;
     }
+
+    setHandlePosition(lowerHandle, file.bounds[0]);
+    setHandlePosition(upperHandle, file.bounds[1]);
+    updateValues();
 
     loader.load(file.url, function (plyGeometry) {
         const geometry = new THREE.BufferGeometry();
