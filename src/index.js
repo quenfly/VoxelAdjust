@@ -239,7 +239,7 @@ const guiHelper = {
     },
 };
 const guiMode = gui
-    .add(guiHelper, "mode", ["Normal", "AR"])
+    .add(guiHelper, "mode", ["Normal" /*, "AR"*/])
     .onChange((value) => {
         if (value === "Normal") {
             switchMode(false);
@@ -327,6 +327,150 @@ renderer.domElement.style.position = "absolute";
 renderer.domElement.style.top = "0px";
 renderer.domElement.style.left = "0px";
 // document.body.appendChild(renderer.domElement);
+
+const pointMarkerList = [];
+const lineMarkerList = [];
+const pointMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff5555,
+});
+const lineMaterial = new THREE.LineBasicMaterial({
+    color: 0xff5555,
+});
+
+/**
+ * 0: 空
+ * 1: 两点测距
+ * 2: 三点测面积
+ */
+let measurementStatus = 0;
+let lengthBtn = document.getElementById("measure-length");
+let areaBtn = document.getElementById("measure-area");
+let measureClearBtn = document.getElementById("measure-clear");
+
+function statusChangeClear(sceneClear = false) {
+    measurementStatus = 0;
+    lengthBtn.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+    areaBtn.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+    lengthBtn.removeAttribute("disabled");
+    areaBtn.removeAttribute("disabled");
+
+    if (sceneClear) {
+        pointMarkerList.forEach((marker) => {
+            scene.remove(marker);
+        });
+        lineMarkerList.forEach((line) => {
+            scene.remove(line);
+        });
+        pointMarkerList.length = 0;
+        lineMarkerList.length = 0;
+    }
+}
+
+lengthBtn.onclick = function () {
+    if (measurementStatus === 0) {
+        lengthBtn.removeAttribute("disabled");
+        measurementStatus = 1;
+        lengthBtn.style.backgroundColor = "rgb(21, 142, 10)";
+        areaBtn.setAttribute("disabled", "true");
+    } else statusChangeClear();
+};
+
+areaBtn.onclick = function () {
+    if (measurementStatus === 0) {
+        areaBtn.removeAttribute("disabled");
+        measurementStatus = 2;
+        areaBtn.style.backgroundColor = "rgb(21, 142, 10)";
+        lengthBtn.setAttribute("disabled", "true");
+    } else statusChangeClear();
+};
+
+measureClearBtn.onclick = function () {
+    statusChangeClear(true);
+};
+
+function getIntersections(event, _camera, L, R) {
+    for (const child of scene.children) {
+        if (child.type !== "Points") continue;
+        var vector = new THREE.Vector2();
+        vector.set(
+            (event.clientX / window.innerWidth) * 2 - 1,
+            -(event.clientY / window.innerHeight) * 2 + 1
+        );
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(vector, _camera);
+        raycaster.params.Points.threshold = 0.005;
+        let result = raycaster.intersectObjects([child], true);
+        // ! GPT 生成
+        result = result.filter((intersect) => {
+            const point = intersect.index;
+
+            const intensity = child.geometry.attributes.color.getX(point);
+            const { xPlane, yPlane, zPlane, dir } = child.material.uniforms;
+
+            // 判断 intensity 是否在 Shader 中允许的范围内
+            if (intensity < L - 1e-6 || intensity > R + 1e-6) {
+                return false;
+            }
+
+            // 判断是否被 clipping plane discard 掉
+            const pos = new THREE.Vector3().fromBufferAttribute(
+                child.geometry.attributes.position,
+                point
+            );
+
+            if (
+                (dir.x === 1 && xPlane.normal.dot(pos) > xPlane.constant) ||
+                (dir.x === -1 && xPlane.normal.dot(pos) < xPlane.constant)
+            ) {
+                return false;
+            }
+
+            if (
+                (dir.y === 1 && yPlane.normal.dot(pos) > yPlane.constant) ||
+                (dir.y === -1 && yPlane.normal.dot(pos) < yPlane.constant)
+            ) {
+                return false;
+            }
+
+            if (
+                (dir.z === 1 && zPlane.normal.dot(pos) > zPlane.constant) ||
+                (dir.z === -1 && zPlane.normal.dot(pos) < zPlane.constant)
+            ) {
+                return false;
+            }
+
+            return true;
+        });
+        // ! GPT 生成
+        return result;
+    }
+
+    return [];
+}
+
+function pointMeasurement(coordinate) {
+    const click_times = pointMarkerList.length;
+    const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.01, 10, 20),
+        pointMaterial
+    );
+    marker.position.copy(coordinate);
+    pointMarkerList.push(marker);
+    scene.add(marker);
+    if (click_times % 2 == 1) {
+        const lineMarker = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([
+                pointMarkerList[pointMarkerList.length - 2].position,
+                marker.position,
+            ]),
+            lineMaterial
+        );
+
+        lineMarkerList.push(lineMarker);
+        scene.add(lineMarker);
+        console.log(scene);
+    }
+}
 
 function load(name) {
     // find url using name
@@ -439,21 +583,64 @@ function load(name) {
                 `,
         });
 
-        document.addEventListener("mousemove", (e) => {
-            handleMouseMove(e);
-            const lowerValue = parseInt(lowerHandle.style.left);
-            const upperValue = parseInt(upperHandle.style.left);
-            material.uniforms.L.value = lowerValue / 100;
-            material.uniforms.R.value = upperValue / 100;
-        });
+        // Prevent duplicate event listeners by adding them only once, outside the loader callback
+        if (!window.__customEventListenersAdded) {
+            document.addEventListener("mousemove", (e) => {
+                if (measurementStatus !== 0) return;
+                handleMouseMove(e);
+                const lowerValue = parseInt(lowerHandle.style.left);
+                const upperValue = parseInt(upperHandle.style.left);
+                // Update all ShaderMaterials in the scene if needed
+                scene.traverse((obj) => {
+                    if (
+                        obj.material &&
+                        obj.material.uniforms &&
+                        obj.material.uniforms.L &&
+                        obj.material.uniforms.R
+                    ) {
+                        obj.material.uniforms.L.value = lowerValue / 100;
+                        obj.material.uniforms.R.value = upperValue / 100;
+                    }
+                });
+            });
 
-        document.addEventListener("touchmove", (e) => {
-            handleMouseMove(e.touches[0]);
-            const lowerValue = parseInt(lowerHandle.style.left);
-            const upperValue = parseInt(upperHandle.style.left);
-            material.uniforms.L.value = lowerValue / 100;
-            material.uniforms.R.value = upperValue / 100;
-        });
+            document.addEventListener("touchmove", (e) => {
+                if (measurementStatus !== 0) return;
+                handleMouseMove(e.touches[0]);
+                const lowerValue = parseInt(lowerHandle.style.left);
+                const upperValue = parseInt(upperHandle.style.left);
+                scene.traverse((obj) => {
+                    if (
+                        obj.material &&
+                        obj.material.uniforms &&
+                        obj.material.uniforms.L &&
+                        obj.material.uniforms.R
+                    ) {
+                        obj.material.uniforms.L.value = lowerValue / 100;
+                        obj.material.uniforms.R.value = upperValue / 100;
+                    }
+                });
+            });
+
+            document.addEventListener("click", (e) => {
+                if (measurementStatus === 0) return;
+                camera.updateMatrixWorld();
+                camera.updateProjectionMatrix();
+                const intersects = getIntersections(
+                    e,
+                    camera,
+                    parseInt(lowerHandle.style.left) / 100,
+                    parseInt(upperHandle.style.left) / 100
+                );
+                if (intersects.length > 0) {
+                    const intersect = intersects[0];
+                    const coordinate = intersect.point;
+                    pointMeasurement(coordinate);
+                }
+            });
+
+            window.__customEventListenersAdded = true;
+        }
 
         geometry.computeVertexNormals();
         geometry.center();
