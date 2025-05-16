@@ -3,6 +3,8 @@ import { TrackballControls } from "three/examples/jsm/controls/TrackballControls
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import * as THREEx from "@ar-js-org/ar.js/three.js/build/ar-threex.js";
 
 const file_content = [
@@ -330,6 +332,7 @@ renderer.domElement.style.left = "0px";
 
 const pointMarkerList = [];
 const lineMarkerList = [];
+const annotationList = [];
 const pointMaterial = new THREE.MeshBasicMaterial({
     color: 0xff5555,
 });
@@ -361,8 +364,12 @@ function statusChangeClear(sceneClear = false) {
         lineMarkerList.forEach((line) => {
             scene.remove(line);
         });
+        annotationList.forEach((annotation) => {
+            scene.remove(annotation);
+        });
         pointMarkerList.length = 0;
         lineMarkerList.length = 0;
+        annotationList.length = 0;
     }
 }
 
@@ -448,6 +455,17 @@ function getIntersections(event, _camera, L, R) {
     return [];
 }
 
+const textMaterials = [
+    new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true }), // front
+    new THREE.MeshPhongMaterial({ color: 0xffffff }), // side
+];
+
+const fontLoader = new FontLoader();
+let font;
+fontLoader.load("optimer_regular.typeface.json", function (response) {
+    debugger;
+    font = response;
+});
 function pointMeasurement(coordinate) {
     const click_times = pointMarkerList.length;
     const marker = new THREE.Mesh(
@@ -458,17 +476,29 @@ function pointMeasurement(coordinate) {
     pointMarkerList.push(marker);
     scene.add(marker);
     if (click_times % 2 == 1) {
+        const p1 = pointMarkerList[pointMarkerList.length - 2].position;
+        const p2 = marker.position;
+
         const lineMarker = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints([
-                pointMarkerList[pointMarkerList.length - 2].position,
-                marker.position,
-            ]),
+            new THREE.BufferGeometry().setFromPoints([p1, p2]),
             lineMaterial
         );
 
         lineMarkerList.push(lineMarker);
         scene.add(lineMarker);
-        console.log(scene);
+
+        const distance = p1.distanceTo(p2).toFixed(2);
+        const textGeo = new TextGeometry(`${distance}`, {
+            font: font,
+            size: 0.05,
+            height: 0.01,
+            curveSegments: 12,
+        });
+        // textGeo.computeBoundingBox();
+        const textMesh = new THREE.Mesh(textGeo, textMaterials);
+        textMesh.position.copy(marker.position);
+        annotationList.push(textMesh);
+        scene.add(textMesh);
     }
 }
 
