@@ -6,6 +6,7 @@ import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import * as THREEx from "@ar-js-org/ar.js/three.js/build/ar-threex.js";
+import { debug } from "three/tsl";
 
 const file_content = [
     {
@@ -331,10 +332,14 @@ renderer.domElement.style.left = "0px";
 // document.body.appendChild(renderer.domElement);
 
 const pointMarkerList = [];
+const pointMarkerList2 = [];
 const lineMarkerList = [];
 const annotationList = [];
 const pointMaterial = new THREE.MeshBasicMaterial({
     color: 0xff5555,
+});
+const pointMaterial2 = new THREE.MeshBasicMaterial({
+    color: 0x5555ff,
 });
 const lineMaterial = new THREE.LineBasicMaterial({
     color: 0xff5555,
@@ -351,6 +356,14 @@ let areaBtn = document.getElementById("measure-area");
 let measureClearBtn = document.getElementById("measure-clear");
 
 function statusChangeClear(sceneClear = false) {
+    if (measurementStatus === 1) {
+        if (pointMarkerList.length % 2 != 0)
+            scene.remove(pointMarkerList.pop());
+    } else if (measurementStatus === 2) {
+        if (pointMarkerList2.length % 3 != 0)
+            scene.remove(pointMarkerList2.pop());
+    }
+
     measurementStatus = 0;
     lengthBtn.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
     areaBtn.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
@@ -361,6 +374,9 @@ function statusChangeClear(sceneClear = false) {
         pointMarkerList.forEach((marker) => {
             scene.remove(marker);
         });
+        pointMarkerList2.forEach((marker) => {
+            scene.remove(marker);
+        });
         lineMarkerList.forEach((line) => {
             scene.remove(line);
         });
@@ -368,6 +384,7 @@ function statusChangeClear(sceneClear = false) {
             scene.remove(annotation);
         });
         pointMarkerList.length = 0;
+        pointMarkerList2.length = 0;
         lineMarkerList.length = 0;
         annotationList.length = 0;
     }
@@ -467,15 +484,16 @@ fontLoader.load("optimer_regular.typeface.json", function (response) {
     font = response;
 });
 function pointMeasurement(coordinate) {
-    const click_times = pointMarkerList.length;
+    if (measurementStatus === 0) return;
     const marker = new THREE.Mesh(
         new THREE.SphereGeometry(0.01, 10, 20),
-        pointMaterial
+        measurementStatus === 1 ? pointMaterial : pointMaterial2
     );
     marker.position.copy(coordinate);
-    pointMarkerList.push(marker);
+    if (measurementStatus === 1) pointMarkerList.push(marker);
+    else pointMarkerList2.push(marker);
     scene.add(marker);
-    if (click_times % 2 == 1) {
+    if (pointMarkerList.length % 2 == 0 && measurementStatus === 1) {
         const p1 = pointMarkerList[pointMarkerList.length - 2].position;
         const p2 = marker.position;
 
@@ -494,9 +512,49 @@ function pointMeasurement(coordinate) {
             height: 0.01,
             curveSegments: 12,
         });
-        // textGeo.computeBoundingBox();
         const textMesh = new THREE.Mesh(textGeo, textMaterials);
-        textMesh.position.copy(marker.position);
+        textMesh.position.copy(
+            new THREE.Vector3().addVectors(p1, p2).divideScalar(2)
+        );
+        annotationList.push(textMesh);
+        scene.add(textMesh);
+    } else if (pointMarkerList2.length % 3 == 0 && measurementStatus === 2) {
+        const p1 = pointMarkerList2[pointMarkerList2.length - 3].position;
+        const p2 = pointMarkerList2[pointMarkerList2.length - 2].position;
+        const p3 = marker.position;
+
+        const triangle = new THREE.Mesh(
+            new THREE.BufferGeometry().setFromPoints([p1, p2, p3]),
+            new THREE.MeshBasicMaterial({
+                color: 0x5555ff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5,
+            })
+        );
+        scene.add(triangle);
+        lineMarkerList.push(triangle);
+
+        const area = Math.abs(
+            (p1.x * (p2.y - p3.y) +
+                p2.x * (p3.y - p1.y) +
+                p3.x * (p1.y - p2.y)) /
+                2
+        ).toFixed(2);
+        const textGeo = new TextGeometry(`${area}`, {
+            font: font,
+            size: 0.05,
+            height: 0.01,
+            curveSegments: 12,
+        });
+        const textMesh = new THREE.Mesh(textGeo, textMaterials);
+        textMesh.position.copy(
+            new THREE.Vector3(
+                (p1.x + p2.x + p3.x) / 3,
+                (p1.y + p2.y + p3.y) / 3,
+                (p1.z + p2.z + p3.z) / 3
+            )
+        );
         annotationList.push(textMesh);
         scene.add(textMesh);
     }
@@ -667,6 +725,12 @@ function load(name) {
                     const coordinate = intersect.point;
                     pointMeasurement(coordinate);
                 }
+            });
+
+            document.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                if (measurementStatus === 0) return;
+                statusChangeClear();
             });
 
             window.__customEventListenersAdded = true;
