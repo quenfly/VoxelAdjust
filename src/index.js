@@ -39,6 +39,13 @@ const file_content = [
         bounds: [0, 100],
     },
     {
+        name: "04_groundKB526_mod",
+        url: "./data/04_groundKB526_mod.ply",
+        description: "The rebar grid is at a depth of 10cm underground; the spacing rebars is around 20cm.",
+        image: "/image/KB_526.png",
+        bounds: [0, 100],
+    },
+    {
         name: "05_groundLE3",
         url: "./data/05_groundLE3.ply",
         description: "",
