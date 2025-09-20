@@ -72,6 +72,7 @@ process_csv_to_ply("data/csv-Muiwo-1.csv", "data/csv-Muiwo-1.ply")
 process_csv_to_ply("data/02_ground.csv", "data/02_ground.ply")
 process_csv_to_ply("data/03_ground.csv", "data/03_ground.ply")
 '''
-process_csv_to_ply("public/data/04_groundKB526_mod.csv", "public/data/04_groundKB526_mod.ply")
+process_csv_to_ply("E:\\OneDrive - The University of Hong Kong - Connect\\sci_research\\GPR\\GPR_treeRoot\\TreeRoot_t186_250918\\csv_TreeRoot_t186_250918.csv",
+                   "public/data/TreeRoot_t186_250918.ply")
 
 

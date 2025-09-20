@@ -136,6 +136,13 @@ const file_content = [
         image: "",
         bounds: [0, 100],
     },
+    {
+        name: "TreeRoot_t186_250918",
+        url: "./data/TreeRoot_t186_250918.ply",
+        description: "The treeroot condition of the treeroot t186_250918 by GPR.",
+        image: "/image/TreeRoot_t186_250918_scanSite.png",
+        bounds: [0, 100],
+    },
 ];
 
 const sliderTrack = document.querySelector(".slider-track");
@@ -249,7 +256,7 @@ const guiHelper = {
     },
 };
 const guiMode = gui
-    .add(guiHelper, "mode", ["Normal" /*, "AR"*/])
+    .add(guiHelper, "mode", ["Normal" , "AR"])
     .onChange((value) => {
         if (value === "Normal") {
             switchMode(false);
