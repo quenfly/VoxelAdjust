@@ -137,8 +137,8 @@ const file_content = [
         bounds: [0, 100],
     },
     {
-        name: "Survey_MWWT_Ground1_Floor3_251209",
-        url: "./data/Survey_MWWT_Ground1_Floor3_251209.ply",
+        name: "Survey_MWWT_Stair_Floor1_251209",
+        url: "./data/Survey_MWWT_Stair_Floor1_251209.ply",
         description:
             "Muiwo watchtower Site Stair, Floor 1:\n" +
             "- Scan area: 90cm × 70cm.\n" +
@@ -149,7 +149,21 @@ const file_content = [
             "- Horizontal rebar spacing: approx. 17cm (spacing does not include bar diameter).\n" +
             "- Schematic layout:\n" +
             "  - 80cm / 60cm indicated for SD1 and SD2 reference directions.",
-        image: "/image/Survey_MWWT_Ground1_Floor3_251209.png",
+        image: "/image/Survey_MWWT_Stair_Floor1_251209.png",
+        bounds: [0, 100],
+    },
+    {
+        name: "Survey_MWWT_Ground2_Floor3_251209",
+        url: "./data/Survey_MWWT_Ground2_Floor3_251209.ply",
+        description:
+            "- Scan area: 1.2m × 1.2m.\n" +
+            "- Location: Center of the floor.\n" +
+            "- Height: 3.28m.\n" +
+            "- A central beam is present, with an estimated width of 25cm, positioned 2.83m from each side.\n" +
+            "- Scan Direction1 (SD1): NW to SE.\n" +
+            "- Scan Direction2 (SD2): SW to NE.\n" +
+            "- Schematic layout (approximate distances) is shown in the image.",
+        image: "/image/Survey_MWWT_Ground2_Floor3_251209.png",
         bounds: [0, 100],
     },
     {
