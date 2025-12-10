@@ -137,6 +137,22 @@ const file_content = [
         bounds: [0, 100],
     },
     {
+        name: "Survey_MWWT_Ground1_Floor3_251209",
+        url: "./data/Survey_MWWT_Ground1_Floor3_251209.ply",
+        description:
+            "Muiwo watchtower Site Stair, Floor 1:\n" +
+            "- Scan area: 90cm × 70cm.\n" +
+            "- Condition: Protective layer above the scan site has spalled, exposing corroded reinforcement.\n" +
+            "- Vertical rebar diameter: 11–15mm.\n" +
+            "- Horizontal rebar diameter: approx. 3.52mm.\n" +
+            "- Vertical rebar spacing: 16cm.\n" +
+            "- Horizontal rebar spacing: approx. 17cm (spacing does not include bar diameter).\n" +
+            "- Schematic layout:\n" +
+            "  - 80cm / 60cm indicated for SD1 and SD2 reference directions.",
+        image: "/image/Survey_MWWT_Ground1_Floor3_251209.png",
+        bounds: [0, 100],
+    },
+    {
         name: "TreeRoot_t186_250918",
         url: "./data/TreeRoot_t186_250918.ply",
         description: "The treeroot condition of the treeroot t186_250918 by GPR.",
