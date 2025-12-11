@@ -12,7 +12,7 @@ import re
 from tqdm import tqdm
 
 # 定义slices文件夹的路径
-folder_path = 'E:\\OneDrive - The University of Hong Kong - Connect\\sci_research\\GPR\\GPR_treeRoot\\TreeRoot_t186_250918\\csv_TreeRoot_t186_250918'
+folder_path = 'E:\\OneDrive - The University of Hong Kong - Connect\\sci_research\\2025.GPRAR_heritage\\[1209]Muiwo-watchtower-detection-sources\\GPR-survey\\csv_Survey_MWWT_Ground1_Floor3_251209'
 
 # 获取slices文件夹下所有的CSV文件并按文件名中的顺序排序
 csv_files = sorted(
