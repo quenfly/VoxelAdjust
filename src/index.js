@@ -287,10 +287,13 @@ overlayContent.onclick = function (event) {
 
 let selected_description = "";
 let selected_image = "";
+let axesHelper;
+let showAxes = true; // 控制是否显示坐标轴
 const gui = new GUI();
 const guiHelper = {
     mode: "Visualize mode",
     name: "Select File",
+    showAxes: true,
     showDescription: function () {
         if (!selected_description) return;
         overlayDescription.style.display = "flex";
@@ -320,6 +323,15 @@ const guiItem = gui
 const guiDescription = gui
     .add(guiHelper, "showDescription")
     .name("Show Description");
+const guiAxes = gui
+    .add(guiHelper, 'showAxes')
+    .name('Show Axes')
+    .onChange((value) => {
+        showAxes = value;
+        if (axesHelper) {
+            axesHelper.visible = value;
+        }
+    });
 let folderArray = [];
 // GUI setup
 
@@ -440,6 +452,17 @@ function statusChangeClear(sceneClear = false) {
             scene.remove(line);
         });
         annotationList.forEach((annotation) => {
+            // 如果是 Sprite，需要手动释放纹理
+            if (annotation.isSprite && annotation.material.map) {
+                annotation.material.map.dispose();
+            }
+            // 如果是 Mesh，也需要清理资源
+            if (annotation.isMesh && annotation.geometry) {
+                annotation.geometry.dispose();
+            }
+            if (annotation.material) {
+                annotation.material.dispose();
+            }
             scene.remove(annotation);
         });
         pointMarkerList.length = 0;
@@ -542,6 +565,80 @@ fontLoader.load("optimer_regular.typeface.json", function (response) {
     debugger;
     font = response;
 });
+
+/**
+ * 创建始终面向相机的文本标签
+ * @param {string} text - 要显示的文本
+ * @param {THREE.Vector3} position1 - 第一个位置（或中心位置）
+ * @param {THREE.Vector3} position2 - 第二个位置（可选，用于线段中点计算）
+ * @param {number} color - 颜色十六进制值
+ */
+function createBillboardText(text, position1, position2 = null, color = 0xffffff) {
+    // 计算标签位置
+    let labelPosition;
+    if (position2) {
+        // 线段中点
+        labelPosition = new THREE.Vector3().addVectors(position1, position2).divideScalar(2);
+        // 将标签稍微抬高，避免与线段重叠
+        labelPosition.y += 0.02;
+    } else {
+        // 直接使用传入的位置
+        labelPosition = position1.clone();
+    }
+
+    // 使用 Sprite（自动 billboarding）
+    createSpriteLabel(text, labelPosition, color);
+
+}
+
+/**
+ * 使用 Sprite 创建标签（自动面向相机）
+ */
+function createSpriteLabel(text, position, color = 0xffffff) {
+    // 创建 Canvas 用于文字渲染
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    // 设置 Canvas 大小（根据文字长度动态调整）
+    const fontSize = 40;
+    const padding = 10;
+    context.font = `bold ${fontSize}px Arial`;
+    const textWidth = context.measureText(text).width;
+
+    canvas.width = textWidth + padding * 2;
+    canvas.height = fontSize + padding * 2;
+
+    // 绘制文字
+    context.font = `bold ${fontSize}px Arial`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+    context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+    // 创建纹理和精灵
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.9
+    });
+
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.position.copy(position);
+
+    // 根据文字长度调整精灵大小
+    const scale = 0.0015 * canvas.width; // 缩放因子，根据需要调整
+    sprite.scale.set(scale, scale * 0.5, 1);
+
+    // Sprite 会自动面向相机，不需要额外处理
+    scene.add(sprite);
+
+    // 存储到 annotationList 以便后续清理
+    annotationList.push(sprite);
+
+    return sprite;
+}
+
 function pointMeasurement(coordinate) {
     if (measurementStatus === 0) return;
     const marker = new THREE.Mesh(
@@ -565,7 +662,9 @@ function pointMeasurement(coordinate) {
         scene.add(lineMarker);
 
         const distance = p1.distanceTo(p2).toFixed(2);
-        const textGeo = new TextGeometry(`${distance}`, {
+        // ============ 创建始终面向相机的距离标签 ============
+        createBillboardText(`${distance} m`, p1, p2, 0xffffff);
+        /*const textGeo = new TextGeometry(`${distance}`, {
             font: font,
             size: 0.05,
             height: 0.01,
@@ -576,7 +675,7 @@ function pointMeasurement(coordinate) {
             new THREE.Vector3().addVectors(p1, p2).divideScalar(2)
         );
         annotationList.push(textMesh);
-        scene.add(textMesh);
+        scene.add(textMesh);*/
     } else if (pointMarkerList2.length % 3 == 0 && measurementStatus === 2) {
         const p1 = pointMarkerList2[pointMarkerList2.length - 3].position;
         const p2 = pointMarkerList2[pointMarkerList2.length - 2].position;
@@ -599,8 +698,17 @@ function pointMeasurement(coordinate) {
                 p2.x * (p3.y - p1.y) +
                 p3.x * (p1.y - p2.y)) /
                 2
-        ).toFixed(2);
-        const textGeo = new TextGeometry(`${area}`, {
+        ).toFixed(4);
+
+        // ============ 创建始终面向相机的面积标签 ============
+        const center = new THREE.Vector3(
+            (p1.x + p2.x + p3.x) / 3,
+            (p1.y + p2.y + p3.y) / 3,
+            (p1.z + p2.z + p3.z) / 3
+        );
+        createBillboardText(`${area} m²`, center, null, 0x5555ff);
+
+        /*const textGeo = new TextGeometry(`${area}`, {
             font: font,
             size: 0.05,
             height: 0.01,
@@ -615,7 +723,99 @@ function pointMeasurement(coordinate) {
             )
         );
         annotationList.push(textMesh);
-        scene.add(textMesh);
+        scene.add(textMesh);*/
+    }
+}
+
+function createAxesHelper(size = 2) {
+    if (axesHelper) {
+        scene.remove(axesHelper);
+    }
+
+    axesHelper = new THREE.Group();
+    // 定义三个轴
+    const axes = [
+        { name: 'X', color: 0xff3333, direction: [1, 0, 0] },
+        { name: 'Y', color: 0x33ff33, direction: [0, 1, 0] },
+        { name: 'Z', color: 0x3366ff, direction: [0, 0, 1] }
+    ];
+
+    // 1. 使用 Three.js 自带的 ArrowHelper
+    axes.forEach(axis => {
+        const direction = new THREE.Vector3(...axis.direction);
+        const origin = new THREE.Vector3(0, 0, 0);
+        const length = size;
+        const hexColor = axis.color;
+
+        const arrowHelper = new THREE.ArrowHelper(
+            direction,
+            origin,
+            length,
+            hexColor,
+            length * 0.1, // 箭头长度比例
+            length * 0.05  // 箭头宽度比例
+        );
+
+        // 加粗线条
+        arrowHelper.line.material.linewidth = 10 * size;
+
+        axesHelper.add(arrowHelper);
+
+        // 2. 创建始终面向相机的文字标签（使用 Sprite）
+        createAxisLabel(axis.name, axis.color, direction, size);
+    });
+
+    // 创建原点标记
+    const originGeometry = new THREE.SphereGeometry(0.05 * size, 16, 16);
+    const originMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const originSphere = new THREE.Mesh(originGeometry, originMaterial);
+    axesHelper.add(originSphere);
+
+    axesHelper.visible = showAxes;
+    return axesHelper;
+
+    // 创建轴标签的内部函数
+    function createAxisLabel(text, color, direction, size) {
+        // 创建 Canvas 用于文字渲染
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        const canvasSize = 256;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+
+        // 清除画布
+        context.clearRect(0, 0, canvasSize, canvasSize);
+
+        // 绘制文字
+
+        context.font = `bold ${size * 80}px Arial`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+        context.fillText(text, canvasSize / 2, canvasSize / 2);
+
+        // 创建纹理和精灵
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 1
+        });
+
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        // 设置标签位置（在轴末端稍远一点）
+        const labelPos = direction.clone().multiplyScalar(size * 1.05);
+        sprite.position.copy(labelPos);
+
+        // 调整精灵大小
+        sprite.scale.set(0.4, 0.4, 1);
+
+        axesHelper.add(sprite);
+
+        // 存储引用以便可能需要的操作
+        if (!axesHelper.labels) axesHelper.labels = [];
+        axesHelper.labels.push(sprite);
     }
 }
 
@@ -935,6 +1135,10 @@ function load(name) {
 
             selected_description = file.description;
             selected_image = file.image;
+
+            axesHelper = createAxesHelper(0.5); // 坐标轴长度
+            axesHelper.visible = showAxes;
+            scene.add(axesHelper);
         }
     });
 }
@@ -1022,6 +1226,28 @@ function switchMode(mode) {
     if (guiItem.getValue() !== "Select File") {
         load(guiItem.getValue());
     }
+
+    if (!isAR && showAxes && guiItem.getValue() !== "Select File") {
+        // 如果切换到普通模式且需要显示坐标轴，重新创建
+        setTimeout(() => {
+            axesHelper = createAxesHelper(2);
+            axesHelper.visible = showAxes;
+            scene.add(axesHelper);
+        }, 100);
+    } else if (isAR && axesHelper) {
+        // AR 模式下移除坐标轴
+        scene.remove(axesHelper);
+    }
+}
+
+function updateMeasurementLabelsBillboarding() {
+    annotationList.forEach(item => {
+        if (item.userData && item.userData.needsBillboarding) {
+            // 对于 TextGeometry 标签
+            item.lookAt(camera.position);
+        }
+        // 对于 Sprite 标签，Three.js 会自动处理 billboarding
+    });
 }
 
 guiMode.setValue("Normal");
@@ -1039,6 +1265,7 @@ function animate() {
         arToolkitSource.onResizeElement();
         arToolkitSource.copyElementSizeTo(renderer.domElement);
     }
+    updateMeasurementLabelsBillboarding();
     stats.begin();
     renderer.render(scene, camera);
     stats.end();
