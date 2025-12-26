@@ -639,43 +639,6 @@ function createSpriteLabel(text, position, color = 0xffffff) {
     return sprite;
 }
 
-/**
- * 方法2：使用 TextGeometry 创建标签（需要手动更新朝向）
- */
-function createTextGeometryLabel(text, position, color = 0xffffff) {
-    if (!font) {
-        console.warn('Font not loaded, using sprite instead');
-        return createSpriteLabel(text, position, color);
-    }
-
-    try {
-        const textGeo = new TextGeometry(text, {
-            font: font,
-            size: 0.05,
-            height: 0.01,
-            curveSegments: 12,
-        });
-
-        const textMaterial = new THREE.MeshBasicMaterial({ color: color });
-        const textMesh = new THREE.Mesh(textGeo, textMaterial);
-        textMesh.position.copy(position);
-
-        // 初始朝向相机
-        textMesh.lookAt(camera.position);
-
-        // 标记为需要 billboarding
-        textMesh.userData.needsBillboarding = true;
-
-        scene.add(textMesh);
-        annotationList.push(textMesh);
-
-        return textMesh;
-    } catch (error) {
-        console.warn('Failed to create text geometry, using sprite instead:', error);
-        return createSpriteLabel(text, position, color);
-    }
-}
-
 function pointMeasurement(coordinate) {
     if (measurementStatus === 0) return;
     const marker = new THREE.Mesh(
@@ -848,7 +811,6 @@ function createAxesHelper(size = 2) {
         // 调整精灵大小
         sprite.scale.set(0.4, 0.4, 1);
 
-        // Sprite 会自动面向相机，这就是我们需要的 billboarding！
         axesHelper.add(sprite);
 
         // 存储引用以便可能需要的操作
