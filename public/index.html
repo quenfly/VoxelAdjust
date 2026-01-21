@@ -221,6 +221,70 @@
             margin-top: 10px;
             border-radius: 4px;
         }
+
+        /* GPR Agent Panel */
+        #gpr-agent-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 150;
+            min-width: 280px;
+            display: none;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #gpr-agent-panel h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 8px;
+        }
+
+        #gpr-agent-panel .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        #gpr-agent-panel .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        #gpr-agent-panel .stat-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        #gpr-agent-panel .anomaly-item {
+            background: #f0f0f0;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        #gpr-agent-panel .close-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        #gpr-agent-panel .close-btn:hover {
+            color: #333;
+        }
     </style>
 </head>
 
@@ -235,6 +299,8 @@
                     alt="Area" /></button>
             <button class="icon-btn" title="Clear" id="measure-clear"><img src="image/clear.svg"
                     alt="Clear" /></button>
+            <button class="icon-btn" title="GPR Analysis Agent" id="gpr-agent-btn"><img src="image/analysis.svg"
+                    alt="GPR Agent" /></button>
             <button class="icon-btn" title="Tutorial Video" id="help-btn" onclick="window.open('https://youtu.be/G00N286INXw', '_blank')">
                 <img src="image/Youtube.svg" alt="Tutorial Video" />
             </button>
@@ -278,6 +344,29 @@
             <div>这是描述文本，可以写任何说明内容。</div>
             <img src="" alt="示例图片">
         </div>
+    </div>
+
+    <!-- GPR Agent Analysis Panel -->
+    <div id="gpr-agent-panel">
+        <button class="close-btn" id="gpr-panel-close">&times;</button>
+        <h3>GPR Analysis Results</h3>
+        <div class="stat-row">
+            <span class="stat-label">Total Points:</span>
+            <span class="stat-value" id="stat-total-points">-</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Avg Intensity:</span>
+            <span class="stat-value" id="stat-avg-intensity">-</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">High Intensity Points:</span>
+            <span class="stat-value" id="stat-high-intensity">-</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Anomalies Detected:</span>
+            <span class="stat-value" id="stat-anomalies">-</span>
+        </div>
+        <div id="anomaly-list"></div>
     </div>
 
     <div id="threed-container"></div>
