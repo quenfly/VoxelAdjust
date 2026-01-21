@@ -495,6 +495,11 @@ measureClearBtn.onclick = function () {
 };
 
 // GPR Agent functionality
+const HIGH_INTENSITY_THRESHOLD = 0.75; // High intensity threshold for anomaly detection
+const ANOMALY_PROXIMITY_THRESHOLD = 0.15; // Distance in meters to group points as same anomaly
+const MAX_ANOMALIES = 20; // Maximum number of anomalies to display
+const MIN_SIGNIFICANT_ANOMALY_COUNT = 5; // Minimum points to consider an anomaly significant
+
 let gprAgentBtn = document.getElementById("gpr-agent-btn");
 let gprAgentPanel = document.getElementById("gpr-agent-panel");
 let gprPanelClose = document.getElementById("gpr-panel-close");
@@ -563,14 +568,16 @@ function analyzeGPRData() {
     // Analyze intensity values
     let sumIntensity = 0;
     let highIntensityPoints = 0;
-    const intensityThreshold = 0.75; // High intensity threshold
     const anomalies = [];
     
+    // Note: This algorithm has O(n²) complexity for large datasets.
+    // For production with large point clouds, consider using spatial data structures
+    // like octrees or k-d trees for more efficient proximity searches.
     for (let i = 0; i < totalPoints; i++) {
         const intensity = colors.getX(i);
         sumIntensity += intensity;
         
-        if (intensity >= intensityThreshold) {
+        if (intensity >= HIGH_INTENSITY_THRESHOLD) {
             highIntensityPoints++;
             
             // Group nearby high-intensity points as anomalies
@@ -586,7 +593,7 @@ function analyzeGPRData() {
                 const dz = z - anomaly.z;
                 const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 
-                if (distance < 0.15) { // Within 15cm
+                if (distance < ANOMALY_PROXIMITY_THRESHOLD) {
                     anomaly.count++;
                     anomaly.maxIntensity = Math.max(anomaly.maxIntensity, intensity);
                     foundNearby = true;
@@ -594,7 +601,7 @@ function analyzeGPRData() {
                 }
             }
             
-            if (!foundNearby && anomalies.length < 20) { // Limit to 20 anomalies
+            if (!foundNearby && anomalies.length < MAX_ANOMALIES) {
                 anomalies.push({ x, y, z, count: 1, maxIntensity: intensity });
             }
         }
@@ -608,8 +615,8 @@ function analyzeGPRData() {
     document.getElementById("stat-high-intensity").textContent = highIntensityPoints.toLocaleString() + 
         ` (${(highIntensityPoints / totalPoints * 100).toFixed(1)}%)`;
     
-    // Filter significant anomalies (at least 5 high-intensity points nearby)
-    const significantAnomalies = anomalies.filter(a => a.count >= 5);
+    // Filter significant anomalies
+    const significantAnomalies = anomalies.filter(a => a.count >= MIN_SIGNIFICANT_ANOMALY_COUNT);
     document.getElementById("stat-anomalies").textContent = significantAnomalies.length;
     
     // Display anomaly list
