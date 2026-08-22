@@ -6,7 +6,6 @@ import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import * as THREEx from "@ar-js-org/ar.js/three.js/build/ar-threex.js";
-import { debug } from "three/tsl";
 
 const file_content = [
     {
@@ -625,7 +624,6 @@ const textMaterials = [
 const fontLoader = new FontLoader();
 let font;
 fontLoader.load("optimer_regular.typeface.json", function (response) {
-    debugger;
     font = response;
 });
 
@@ -1177,6 +1175,17 @@ function setCurrentPlyName(name) {
     el.textContent = name ? `PLY: ${name}` : "No PLY loaded";
 }
 
+let currentPlySource = null;
+
+function reloadCurrentPly() {
+    if (!currentPlySource) return;
+    if (currentPlySource.type === "preset") {
+        load(currentPlySource.name);
+    } else {
+        loadFromFile(currentPlySource.file, { keepGui: true });
+    }
+}
+
 function load(name) {
     // find url using name
     const file = file_content.find((item) => item.name === name);
@@ -1190,20 +1199,26 @@ function load(name) {
     setHandlePosition(upperHandle, file.bounds[1]);
     updateValues();
 
+    currentPlySource = { type: "preset", name };
+
     loader.load(file.url, function (plyGeometry) {
         displayPlyGeometry(plyGeometry, file);
     });
 }
 
-async function loadFromFile(file) {
+async function loadFromFile(file, { keepGui = false } = {}) {
     clearSceneForLoad();
 
-    guiHelper.name = "Select File";
-    guiItem.setValue("Select File");
+    if (!keepGui) {
+        guiHelper.name = "Select File";
+        guiItem.setValue("Select File");
+    }
 
     setHandlePosition(lowerHandle, 0);
     setHandlePosition(upperHandle, 100);
     updateValues();
+
+    currentPlySource = { type: "upload", file };
 
     try {
         const buffer = await file.arrayBuffer();
@@ -1302,11 +1317,9 @@ function switchMode(mode) {
         arToolkitContext = null;
         swithchToNormal();
     }
-    if (guiItem.getValue() !== "Select File") {
-        load(guiItem.getValue());
-    }
+    reloadCurrentPly();
 
-    if (!isAR && showAxes && guiItem.getValue() !== "Select File") {
+    if (!isAR && showAxes && currentPlySource) {
         // 如果切换到普通模式且需要显示坐标轴，重新创建
         setTimeout(() => {
             axesHelper = createAxesHelper(2);
