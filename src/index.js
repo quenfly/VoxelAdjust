@@ -60,84 +60,98 @@ const file_content = [
         bounds: [0, 100],
     },
     {
-        name: "Aging_building_Straight_retaining_wall",
+        name: "07_Aging_building_Straight_retaining_wall",
         url: "./data/Aging_building_Straight_retaining_wall.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Aging_building_Straight_retaining_wall_2",
+        name: "08_Aging_building_Straight_retaining_wall_2",
         url: "./data/Aging_building_Straight_retaining_wall_2.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Aging_building_Curved_strut",
+        name: "09_Aging_building_Curved_strut",
         url: "./data/Aging_building_Curved_strut.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Aging_building_Stair_ground",
+        name: "10_Aging_building_Stair_ground",
         url: "./data/Aging_building_Stair_ground.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Aging_building_Stair_side",
+        name: "11_Aging_building_Stair_side",
         url: "./data/Aging_building_Stair_side.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Aging_building_Stair_side_2",
+        name: "12_Aging_building_Stair_side_2",
         url: "./data/Aging_building_Stair_side_2.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Aging_building_Lintel",
+        name: "13_Aging_building_Lintel",
         url: "./data/Aging_building_Lintel.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Muiwo-1",
+        name: "14_Muiwo-1",
         url: "./data/Muiwo-1.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Muiwo-2",
+        name: "15_Muiwo-2",
         url: "./data/Muiwo-2.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Muiwo-3",
+        name: "16_Muiwo-3",
         url: "./data/Muiwo-3.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Muiwo-4",
+        name: "16_1_Muiwo-3_aligned",
+        url: "./data/Muiwo-3_aligned.ply",
+        description: "",
+        image: "",
+        bounds: [0, 100],
+    },
+    {
+        name: "17_Muiwo-4",
         url: "./data/Muiwo-4.ply",
         description: "",
         image: "",
         bounds: [0, 100],
     },
     {
-        name: "Survey_MWWT_Stair_Floor1_251209",
+        name: "17_1_Muiwo-4_aligned",
+        url: "./data/Muiwo_4_1_log_norm.ply",
+        description: "",
+        image: "",
+        bounds: [0, 100],
+    },
+    {
+        name: "18_Survey_MWWT_Stair_Floor1_251209",
         url: "./data/Survey_MWWT_Stair_Floor1_251209.ply",
         description:
             "Muiwo watchtower Site Stair, Floor 1:\n" +
@@ -153,7 +167,7 @@ const file_content = [
         bounds: [0, 100],
     },
     {
-        name: "Survey_MWWT_Ground1_Floor3_251209",
+        name: "19_Survey_MWWT_Ground1_Floor3_251209",
         url: "./data/Survey_MWWT_Ground1_Floor3_251209.ply",
         description:
             "Muiwo watchtower Site Ground-1, Floor 3\n" +
@@ -168,7 +182,7 @@ const file_content = [
         bounds: [0, 100],
     },
     {
-        name: "Survey_MWWT_Ground2_Floor3_251209",
+        name: "20_Survey_MWWT_Ground2_Floor3_251209",
         url: "./data/Survey_MWWT_Ground2_Floor3_251209.ply",
         description:
             "- Scan area: 1.2m × 1.2m.\n" +
@@ -182,7 +196,7 @@ const file_content = [
         bounds: [0, 100],
     },
     {
-        name: "TreeRoot_t186_250918",
+        name: "21_TreeRoot_t186_250918",
         url: "./data/TreeRoot_t186_250918.ply",
         description: "The treeroot condition of the treeroot t186_250918 by GPR.",
         image: "/image/TreeRoot_t186_250918_scanSite.png",
@@ -290,10 +304,17 @@ let selected_image = "";
 let axesHelper;
 let showAxes = true; // 控制是否显示坐标轴
 const gui = new GUI();
+const plyFileInput = document.createElement("input");
+plyFileInput.type = "file";
+plyFileInput.accept = ".ply,application/octet-stream";
+plyFileInput.style.display = "none";
+document.body.appendChild(plyFileInput);
+
 const guiHelper = {
     mode: "Visualize mode",
     name: "Select File",
     showAxes: true,
+    darkBackground: false,
     showDescription: function () {
         if (!selected_description) return;
         overlayDescription.style.display = "flex";
@@ -301,6 +322,9 @@ const guiHelper = {
         if (selected_image) {
             overlayContent.innerHTML += `<br><br><img src="${selected_image}" alt="Image" style="width: 60%; height: auto;">`;
         }
+    },
+    uploadPly: function () {
+        plyFileInput.click();
     },
 };
 const guiMode = gui
@@ -316,10 +340,14 @@ const guiItem = gui
     .add(
         guiHelper,
         "name",
-        file_content.map((item) => item.name)
+        ["Select File", ...file_content.map((item) => item.name)]
     )
     .name("GPR Example")
-    .onChange((value) => load(value));
+    .onChange((value) => {
+        if (value === "Select File") return;
+        load(value);
+    });
+const guiUpload = gui.add(guiHelper, "uploadPly").name("Upload PLY");
 const guiDescription = gui
     .add(guiHelper, "showDescription")
     .name("Show Description");
@@ -332,6 +360,36 @@ const guiAxes = gui
             axesHelper.visible = value;
         }
     });
+
+function updateBackgroundColor() {
+    if (!renderer) return;
+    renderer.setClearColor(
+        new THREE.Color(guiHelper.darkBackground ? "black" : "white"),
+        1
+    );
+    document.querySelectorAll(".icon-btn").forEach((btn) => {
+        btn.classList.toggle("on-light", !guiHelper.darkBackground);
+    });
+    const plyNameEl = document.getElementById("ply-name");
+    if (plyNameEl) {
+        plyNameEl.classList.toggle("on-dark", guiHelper.darkBackground);
+    }
+}
+
+const guiBackground = gui
+    .add(guiHelper, 'darkBackground')
+    .name('Dark Background')
+    .onChange(() => {
+        updateBackgroundColor();
+    });
+
+plyFileInput.addEventListener("change", () => {
+    const file = plyFileInput.files && plyFileInput.files[0];
+    if (!file) return;
+    loadFromFile(file);
+    plyFileInput.value = "";
+});
+
 let folderArray = [];
 // GUI setup
 
@@ -377,13 +435,18 @@ loadingOverlay.appendChild(loadingRenderer.domElement);
 document.body.appendChild(loadingOverlay);
 
 animateLoading();
-loadingManager.onStart = function (url, itemsLoaded, itemsTotal) {
+function clearSceneForLoad() {
     loadingOverlay.style.display = "flex";
     scene.clear();
     markerRoot.clear();
     folderArray.forEach((folder) => {
         folder.destroy();
     });
+    folderArray = [];
+}
+
+loadingManager.onStart = function (url, itemsLoaded, itemsTotal) {
+    clearSceneForLoad();
 };
 loadingManager.onProgress = function (url, itemsLoaded, itemsTotal) {};
 loadingManager.onLoad = function () {
@@ -573,7 +636,8 @@ fontLoader.load("optimer_regular.typeface.json", function (response) {
  * @param {THREE.Vector3} position2 - 第二个位置（可选，用于线段中点计算）
  * @param {number} color - 颜色十六进制值
  */
-function createBillboardText(text, position1, position2 = null, color = 0xffffff) {
+function createBillboardText(text, position1, position2 = null, color = 0x000000) {
+    // 白色字体则为color = 0xffffff
     // 计算标签位置
     let labelPosition;
     if (position2) {
@@ -620,11 +684,14 @@ function createSpriteLabel(text, position, color = 0xffffff) {
     const spriteMaterial = new THREE.SpriteMaterial({
         map: texture,
         transparent: true,
-        opacity: 0.9
+        opacity: 1,
+        depthTest: false,
+        depthWrite: false,
     });
 
     const sprite = new THREE.Sprite(spriteMaterial);
     sprite.position.copy(position);
+    sprite.renderOrder = 999;
 
     // 根据文字长度调整精灵大小
     const scale = 0.0015 * canvas.width; // 缩放因子，根据需要调整
@@ -663,7 +730,7 @@ function pointMeasurement(coordinate) {
 
         const distance = p1.distanceTo(p2).toFixed(2);
         // ============ 创建始终面向相机的距离标签 ============
-        createBillboardText(`${distance} m`, p1, p2, 0xffffff);
+        createBillboardText(`${distance} m`, p1, p2, 0x000000);
         /*const textGeo = new TextGeometry(`${distance}`, {
             font: font,
             size: 0.05,
@@ -706,7 +773,7 @@ function pointMeasurement(coordinate) {
             (p1.y + p2.y + p3.y) / 3,
             (p1.z + p2.z + p3.z) / 3
         );
-        createBillboardText(`${area} m²`, center, null, 0x5555ff);
+        createBillboardText(`${area} m²`, center, null, 0x000000);
 
         /*const textGeo = new TextGeometry(`${area}`, {
             font: font,
@@ -737,7 +804,7 @@ function createAxesHelper(size = 2) {
     const axes = [
         { name: 'X', color: 0xff3333, direction: [1, 0, 0] },
         { name: 'Y', color: 0x33ff33, direction: [0, 1, 0] },
-        { name: 'Z', color: 0x3366ff, direction: [0, 0, 1] }
+        { name: 'Z', color: 0x3366ff, direction: [0, 0, -1] }
     ];
 
     // 1. 使用 Three.js 自带的 ArrowHelper
@@ -799,10 +866,14 @@ function createAxesHelper(size = 2) {
         const spriteMaterial = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            opacity: 1
+            opacity: 1,
+            alphaTest: 0.01,
+            depthTest: false,
+            depthWrite: false,
         });
 
         const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.renderOrder = 1000;
 
         // 设置标签位置（在轴末端稍远一点）
         const labelPos = direction.clone().multiplyScalar(size * 1.05);
@@ -819,56 +890,55 @@ function createAxesHelper(size = 2) {
     }
 }
 
-function load(name) {
-    // find url using name
-    const file = file_content.find((item) => item.name === name);
-
-    if (!file || !file.url) {
-        console.error("File not found:", name);
+function displayPlyGeometry(plyGeometry, file) {
+    if (!plyGeometry.attributes.position) {
+        console.error("PLY has no position attribute");
+        loadingOverlay.style.display = "none";
         return;
     }
 
-    setHandlePosition(lowerHandle, file.bounds[0]);
-    setHandlePosition(upperHandle, file.bounds[1]);
-    updateValues();
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(
+            plyGeometry.attributes.position.array,
+            3
+        )
+    );
 
-    loader.load(file.url, function (plyGeometry) {
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute(
-            "position",
-            new THREE.Float32BufferAttribute(
-                plyGeometry.attributes.position.array,
-                3
-            )
+    let colorArray;
+    if (plyGeometry.attributes.color) {
+        colorArray = plyGeometry.attributes.color.array;
+    } else {
+        colorArray = new Float32Array(
+            plyGeometry.attributes.position.count * 3
         );
-        geometry.setAttribute(
-            "color",
-            new THREE.Float32BufferAttribute(
-                plyGeometry.attributes.color.array,
-                3
-            )
-        );
-        geometry.needsUpdate = true;
+    }
+    geometry.setAttribute(
+        "color",
+        new THREE.Float32BufferAttribute(colorArray, 3)
+    );
+    geometry.needsUpdate = true;
 
-        const planes = [
-            new THREE.Vector4(1, 0, 0, 0),
-            new THREE.Vector4(0, 1, 0, 0),
-            new THREE.Vector4(0, 0, 1, 0),
-        ];
-        let dir = new THREE.Vector3(1, 1, 1);
-        const material = new THREE.ShaderMaterial({
-            transparent: true,
-            vertexColors: true,
-            clipping: true,
-            uniforms: {
-                L: { value: 0 },
-                R: { value: 100 },
-                xPlane: { value: planes[0] },
-                yPlane: { value: planes[1] },
-                zPlane: { value: planes[2] },
-                dir: { value: dir },
-            },
-            vertexShader: `
+    const planes = [
+        new THREE.Vector4(1, 0, 0, 0),
+        new THREE.Vector4(0, 1, 0, 0),
+        new THREE.Vector4(0, 0, 1, 0),
+    ];
+    let dir = new THREE.Vector3(1, 1, 1);
+    const material = new THREE.ShaderMaterial({
+        transparent: true,
+        vertexColors: true,
+        clipping: true,
+        uniforms: {
+            L: { value: 0 },
+            R: { value: 100 },
+            xPlane: { value: planes[0] },
+            yPlane: { value: planes[1] },
+            zPlane: { value: planes[2] },
+            dir: { value: dir },
+        },
+        vertexShader: `
                     vec3 interpolateColor(float ratio, vec3 color1, vec3 color2) {
                         return mix(color1, color2, ratio);
                     }
@@ -903,7 +973,7 @@ function load(name) {
                         gl_PointSize = 6.0;
                     }
                 `,
-            fragmentShader: `
+        fragmentShader: `
                     varying vec3 vColor;
                     varying vec3 vPosition;
                     uniform vec4 xPlane;
@@ -928,225 +998,234 @@ function load(name) {
                         gl_FragColor = vec4(vColor, 1.0);
                     }
                 `,
-        });
+    });
 
-        // Prevent duplicate event listeners by adding them only once, outside the loader callback
-        if (!window.__customEventListenersAdded) {
-            document.addEventListener("mousemove", (e) => {
-                if (measurementStatus !== 0) return;
-                handleMouseMove(e);
-                const lowerValue = parseInt(lowerHandle.style.left);
-                const upperValue = parseInt(upperHandle.style.left);
-                // Update all ShaderMaterials in the scene if needed
-                scene.traverse((obj) => {
-                    if (
-                        obj.material &&
-                        obj.material.uniforms &&
-                        obj.material.uniforms.L &&
-                        obj.material.uniforms.R
-                    ) {
-                        obj.material.uniforms.L.value = lowerValue / 100;
-                        obj.material.uniforms.R.value = upperValue / 100;
-                    }
-                });
-            });
-
-            document.addEventListener("touchmove", (e) => {
-                if (measurementStatus !== 0) return;
-                handleMouseMove(e.touches[0]);
-                const lowerValue = parseInt(lowerHandle.style.left);
-                const upperValue = parseInt(upperHandle.style.left);
-                scene.traverse((obj) => {
-                    if (
-                        obj.material &&
-                        obj.material.uniforms &&
-                        obj.material.uniforms.L &&
-                        obj.material.uniforms.R
-                    ) {
-                        obj.material.uniforms.L.value = lowerValue / 100;
-                        obj.material.uniforms.R.value = upperValue / 100;
-                    }
-                });
-            });
-
-            document.addEventListener("click", (e) => {
-                if (measurementStatus === 0) return;
-                camera.updateMatrixWorld();
-                camera.updateProjectionMatrix();
-                const intersects = getIntersections(
-                    e,
-                    camera,
-                    parseInt(lowerHandle.style.left) / 100,
-                    parseInt(upperHandle.style.left) / 100
-                );
-                if (intersects.length > 0) {
-                    const intersect = intersects[0];
-                    const coordinate = intersect.point;
-                    pointMeasurement(coordinate);
+    // Prevent duplicate event listeners by adding them only once, outside the loader callback
+    if (!window.__customEventListenersAdded) {
+        document.addEventListener("mousemove", (e) => {
+            if (measurementStatus !== 0) return;
+            handleMouseMove(e);
+            const lowerValue = parseInt(lowerHandle.style.left);
+            const upperValue = parseInt(upperHandle.style.left);
+            // Update all ShaderMaterials in the scene if needed
+            scene.traverse((obj) => {
+                if (
+                    obj.material &&
+                    obj.material.uniforms &&
+                    obj.material.uniforms.L &&
+                    obj.material.uniforms.R
+                ) {
+                    obj.material.uniforms.L.value = lowerValue / 100;
+                    obj.material.uniforms.R.value = upperValue / 100;
                 }
             });
+        });
 
-            document.addEventListener("contextmenu", (e) => {
-                e.preventDefault();
-                if (measurementStatus === 0) return;
-                statusChangeClear();
+        document.addEventListener("touchmove", (e) => {
+            if (measurementStatus !== 0) return;
+            handleMouseMove(e.touches[0]);
+            const lowerValue = parseInt(lowerHandle.style.left);
+            const upperValue = parseInt(upperHandle.style.left);
+            scene.traverse((obj) => {
+                if (
+                    obj.material &&
+                    obj.material.uniforms &&
+                    obj.material.uniforms.L &&
+                    obj.material.uniforms.R
+                ) {
+                    obj.material.uniforms.L.value = lowerValue / 100;
+                    obj.material.uniforms.R.value = upperValue / 100;
+                }
             });
+        });
 
-            window.__customEventListenersAdded = true;
-        }
+        document.addEventListener("click", (e) => {
+            if (measurementStatus === 0) return;
+            camera.updateMatrixWorld();
+            camera.updateProjectionMatrix();
+            const intersects = getIntersections(
+                e,
+                camera,
+                parseInt(lowerHandle.style.left) / 100,
+                parseInt(upperHandle.style.left) / 100
+            );
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const coordinate = intersect.point;
+                pointMeasurement(coordinate);
+            }
+        });
 
-        geometry.computeVertexNormals();
-        geometry.center();
+        document.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            if (measurementStatus === 0) return;
+            statusChangeClear();
+        });
 
-        // Create and add the point cloud to the scene
-        const pointCloud = new THREE.Points(geometry, material);
-        scene.add(pointCloud);
+        window.__customEventListenersAdded = true;
+    }
 
-        // Create an ambient light
-        const ambientLight = new THREE.AmbientLight(0xffffff, 10000);
-        scene.add(ambientLight);
-        // Create a hemispheric light
-        const hemisphereLight = new THREE.HemisphereLight(
-            0xffffff,
-            0x444444,
-            10000
+    geometry.computeVertexNormals();
+
+    selected_description = file.description || "";
+    selected_image = file.image || "";
+    setCurrentPlyName(file.name || "");
+
+    // Create and add the point cloud to the scene
+    const pointCloud = new THREE.Points(geometry, material);
+    scene.add(pointCloud);
+
+    // Create an ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 10000);
+    scene.add(ambientLight);
+    // Create a hemispheric light
+    const hemisphereLight = new THREE.HemisphereLight(
+        0xffffff,
+        0x444444,
+        10000
+    );
+    scene.add(hemisphereLight);
+
+    geometry.computeBoundingBox();
+    if (isAR) {
+        scene.add(markerRoot);
+        markerRoot.add(pointCloud);
+        geometry.computeBoundingSphere();
+    } else {
+        // Compute the bounding box of the point cloud
+        const boundingBox = new THREE.Box3().setFromObject(pointCloud);
+        boundingBox.getCenter(camera.position);
+
+        // Adjust the camera position
+        const size = boundingBox.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+        camera.position.set(
+            camera.position.x,
+            camera.position.y,
+            cameraZ * 1.5
         );
-        scene.add(hemisphereLight);
+        // Make the camera look at the center of the point cloud
+        camera.lookAt(boundingBox.getCenter(new THREE.Vector3()));
 
-        geometry.computeBoundingBox();
-        if (isAR) {
-            scene.add(markerRoot);
-            markerRoot.add(pointCloud);
-            geometry.computeBoundingBox();
+        // GUI setup
+        const planeNames = ["X", "Y", "Z"];
+        const planeHelpers = [
+            new THREE.PlaneHelper(new THREE.Plane(), 1.3, 0xff0000),
+            new THREE.PlaneHelper(new THREE.Plane(), 1.3, 0x00ff00),
+            new THREE.PlaneHelper(new THREE.Plane(), 1.3, 0x0000ff),
+        ];
+        planeHelpers.forEach((planeHelper) => {
+            scene.add(planeHelper);
+            planeHelper.visible = true;
+        });
 
-            // Get the bounding box
-            const boundingBox = geometry.boundingBox;
-
-            // Calculate the center of the bounding box
-            const center = new THREE.Vector3();
-            boundingBox.getCenter(center);
-
-            // Create a translation matrix to move the geometry to the origin
-            const translationMatrix = new THREE.Matrix4().makeTranslation(
-                -center.x,
-                -center.y,
-                -center.z
+        planes.forEach((plane, index) => {
+            plane.w =
+                boundingBox.max[planeNames[index].toLowerCase()] + 1e-6;
+            planeHelpers[index].plane = new THREE.Plane(
+                new THREE.Vector3().fromArray(plane.toArray()),
+                -plane.w
             );
 
-            // Apply the translation to the geometry
-            geometry.applyMatrix4(translationMatrix);
-
-            // Calculate the maximum dimension of the bounding box
-            const maxDimension = Math.max(
-                boundingBox.max.x - boundingBox.min.x,
-                boundingBox.max.y - boundingBox.min.y,
-                boundingBox.max.z - boundingBox.min.z
-            );
-
-            // Calculate the scale factor to fit the geometry within a 1x1x1 cube
-            const scaleFactor = 10 / maxDimension;
-
-            // Create a scale matrix
-            const scaleMatrix = new THREE.Matrix4().makeScale(
-                scaleFactor,
-                scaleFactor,
-                scaleFactor
-            );
-
-            // Apply the scale to the geometry
-            geometry.applyMatrix4(scaleMatrix);
-
-            // Update the geometry's attributes
-            geometry.computeBoundingBox();
-            geometry.computeBoundingSphere();
-        } else {
-            // Compute the bounding box of the point cloud
-            const boundingBox = new THREE.Box3().setFromObject(pointCloud);
-            boundingBox.getCenter(camera.position);
-
-            // Adjust the camera position
-            const size = boundingBox.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const fov = camera.fov * (Math.PI / 180);
-            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-            camera.position.set(
-                camera.position.x,
-                camera.position.y,
-                cameraZ * 1.5
-            );
-            // Make the camera look at the center of the point cloud
-            camera.lookAt(boundingBox.getCenter(new THREE.Vector3()));
-
-            // GUI setup
-            const planeNames = ["X", "Y", "Z"];
-            const planeHelpers = [
-                new THREE.PlaneHelper(new THREE.Plane(), 1.3, 0xff0000),
-                new THREE.PlaneHelper(new THREE.Plane(), 1.3, 0x00ff00),
-                new THREE.PlaneHelper(new THREE.Plane(), 1.3, 0x0000ff),
-            ];
-            planeHelpers.forEach((planeHelper) => {
-                scene.add(planeHelper);
-                planeHelper.visible = true;
-            });
-
-            planes.forEach((plane, index) => {
-                plane.w =
-                    boundingBox.max[planeNames[index].toLowerCase()] + 1e-6;
-                planeHelpers[index].plane = new THREE.Plane(
-                    new THREE.Vector3().fromArray(plane.toArray()),
-                    -plane.w
+            const planeFolder = gui.addFolder(`plane${planeNames[index]}`);
+            planeFolder.domElement
+                .querySelector(".title")
+                .style.setProperty(
+                    "color",
+                    `#${planeHelpers[index].material.color.getHexString()}`
                 );
-
-                const planeFolder = gui.addFolder(`plane${planeNames[index]}`);
-                planeFolder.domElement
-                    .querySelector(".title")
-                    .style.setProperty(
-                        "color",
-                        `#${planeHelpers[index].material.color.getHexString()}`
+            planeFolder
+                .add(planeHelpers[index], "visible")
+                .name("displayHelper");
+            planeFolder
+                .add(plane, "w")
+                .name("position")
+                .min(
+                    boundingBox.min[planeNames[index].toLowerCase()] - 1e-6
+                )
+                .max(
+                    boundingBox.max[planeNames[index].toLowerCase()] + 1e-6
+                )
+                .onChange((value) => {
+                    plane.w = value;
+                    planeHelpers[index].plane = new THREE.Plane(
+                        new THREE.Vector3().fromArray(plane.toArray()),
+                        -value
                     );
-                planeFolder
-                    .add(planeHelpers[index], "visible")
-                    .name("displayHelper");
-                planeFolder
-                    .add(plane, "w")
-                    .name("position")
-                    .min(
-                        boundingBox.min[planeNames[index].toLowerCase()] - 1e-6
-                    )
-                    .max(
-                        boundingBox.max[planeNames[index].toLowerCase()] + 1e-6
-                    )
-                    .onChange((value) => {
-                        plane.w = value;
-                        planeHelpers[index].plane = new THREE.Plane(
-                            new THREE.Vector3().fromArray(plane.toArray()),
-                            -value
-                        );
-                    });
-                planeFolder
-                    .add({ mirror: false }, "mirror")
-                    .onChange((value) => {
-                        dir[planeNames[index].toLowerCase()] =
-                            -dir[planeNames[index].toLowerCase()];
-                    });
-                planeFolder.open();
-                folderArray.push(planeFolder);
-            });
+                });
+            planeFolder
+                .add({ mirror: false }, "mirror")
+                .onChange((value) => {
+                    dir[planeNames[index].toLowerCase()] =
+                        -dir[planeNames[index].toLowerCase()];
+                });
+            planeFolder.open();
+            folderArray.push(planeFolder);
+        });
 
-            selected_description = file.description;
-            selected_image = file.image;
+        axesHelper = createAxesHelper(0.5); // 坐标轴长度
+        axesHelper.visible = showAxes;
+        scene.add(axesHelper);
+    }
+}
 
-            axesHelper = createAxesHelper(0.5); // 坐标轴长度
-            axesHelper.visible = showAxes;
-            scene.add(axesHelper);
-        }
+function setCurrentPlyName(name) {
+    const el = document.getElementById("ply-name");
+    if (!el) return;
+    el.textContent = name ? `PLY: ${name}` : "No PLY loaded";
+}
+
+function load(name) {
+    // find url using name
+    const file = file_content.find((item) => item.name === name);
+
+    if (!file || !file.url) {
+        console.error("File not found:", name);
+        return;
+    }
+
+    setHandlePosition(lowerHandle, file.bounds[0]);
+    setHandlePosition(upperHandle, file.bounds[1]);
+    updateValues();
+
+    loader.load(file.url, function (plyGeometry) {
+        displayPlyGeometry(plyGeometry, file);
     });
+}
+
+async function loadFromFile(file) {
+    clearSceneForLoad();
+
+    guiHelper.name = "Select File";
+    guiItem.setValue("Select File");
+
+    setHandlePosition(lowerHandle, 0);
+    setHandlePosition(upperHandle, 100);
+    updateValues();
+
+    try {
+        const buffer = await file.arrayBuffer();
+        const plyGeometry = loader.parse(buffer);
+        displayPlyGeometry(plyGeometry, {
+            name: file.name,
+            description: `Uploaded: ${file.name}`,
+            image: "",
+            bounds: [0, 100],
+        });
+    } catch (err) {
+        console.error("Failed to parse PLY:", err);
+        alert("Failed to parse PLY: " + (err && err.message ? err.message : err));
+    } finally {
+        loadingOverlay.style.display = "none";
+    }
 }
 
 let isAR = false;
 
 function swithchToNormal() {
-    renderer.setClearColor(new THREE.Color("black"), 1);
+    updateBackgroundColor();
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(
         75,

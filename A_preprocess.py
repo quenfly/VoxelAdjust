@@ -26,7 +26,7 @@ def intensity_to_rgb(intensity):
 
 
 # Main function to process the CSV file, voxelize, and save to PLY
-def process_csv_to_ply(csv_filename, ply_filename):
+def process_csv_to_ply(csv_filename, ply_filename, log_norm=True, pcd_transform=True):
     points = []
     intensities = []
 
@@ -46,24 +46,51 @@ def process_csv_to_ply(csv_filename, ply_filename):
     # Deal with values equaling 0
     intensities = np.array(intensities) + 1e-10
 
-    # Apply log_transformed
-    log_transformed = np.log(intensities)
+    # Apply log_transformed (optional)
+    if log_norm:
+        intensities = np.log(intensities)
+    # Normalize intensity values to the range [0, 1] (optional)
+        min_intensity = min(intensities)
+        max_intensity = max(intensities)
+        intensities = (
+            ((np.array(intensities) - min_intensity) / (max_intensity - min_intensity))
+            .reshape(-1, 1)
+            .repeat(3, axis=1)
+        )
+    else:
+        # If not normalizing, reshape to RGB format anyway
+        intensities = (
+            np.array(intensities)
+            .reshape(-1, 1)
+            .repeat(3, axis=1)
+        )
+    
+    if pcd_transform is True:
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points)
+        pcd.colors = o3d.utility.Vector3dVector(intensities)
+        o3d.io.write_point_cloud(
+            ply_filename, pcd.voxel_down_sample(voxel_size=0.006), write_ascii=False
+        )
+        print(f"{ply_filename} finished!")
+    else:
+        # Write to CSV file if pcd_transform is False
+        # Extract intensity values (take the first channel since they're duplicated in RGB format)
+        intensity_values = intensities[:, 0]
+        
+        # Create output CSV filename by inserting '_processed' before the extension
+        csv_output_filename = ply_filename.replace('.ply', '.csv')
+        
+        # Write points and intensities to CSV
+        with open(csv_output_filename, "w", newline="") as csvfile:
+            csvwriter = csv.writer(csvfile)
+            for i in range(len(points)):
+                x, y, z = points[i]
+                intensity = intensity_values[i]
+                csvwriter.writerow([x, y, z, intensity])
+        
+        print(f"{csv_output_filename} finished!")
 
-    # Normalize intensity values to the range [0, 1]
-    min_intensity = min(log_transformed)
-    max_intensity = max(log_transformed)
-    log_transformed = (
-        ((np.array(log_transformed) - min_intensity) / (max_intensity - min_intensity))
-        .reshape(-1, 1)
-        .repeat(3, axis=1)
-    )
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    pcd.colors = o3d.utility.Vector3dVector(log_transformed)
-    o3d.io.write_point_cloud(
-        ply_filename, pcd.voxel_down_sample(voxel_size=0.006), write_ascii=False
-    )
-    print(f"{ply_filename} finished!")
 
 
 # Example usage:
@@ -71,8 +98,12 @@ def process_csv_to_ply(csv_filename, ply_filename):
 process_csv_to_ply("data/csv-Muiwo-1.csv", "data/csv-Muiwo-1.ply")
 process_csv_to_ply("data/02_ground.csv", "data/02_ground.ply")
 process_csv_to_ply("data/03_ground.csv", "data/03_ground.ply")
+
+process_csv_to_ply("E:\\OneDrive - The University of Hong Kong - Connect\\sci_research\\2025.GPRAR_heritage\\sensitivity\\GPRdata\\Muiwo_4_7.csv",
+                   "E:\\OneDrive - The University of Hong Kong - Connect\\sci_research\\2025.GPRAR_heritage\\sensitivity\\GPRdata\\Muiwo_4_7.ply", apply_log=False, normalize=False)
 '''
-process_csv_to_ply("public/data/csv-Muiwo-4_mod.csv",
-                   "public/data/csv-Muiwo-4_mod.ply")
+
+process_csv_to_ply("pcd_postprocessing/pcd_data/csv-Muiwo-4.csv",
+                   "pcd_postprocessing/pcd_data/csv-Muiwo-4_log_norm.ply", log_norm=True)
 
 
