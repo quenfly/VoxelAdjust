@@ -556,6 +556,169 @@ measureClearBtn.onclick = function () {
     statusChangeClear(true);
 };
 
+// GPR Agent functionality
+const HIGH_INTENSITY_THRESHOLD = 0.75; // High intensity threshold for anomaly detection
+const ANOMALY_PROXIMITY_THRESHOLD = 0.15; // Distance in meters to group points as same anomaly
+const MAX_ANOMALIES = 20; // Maximum number of anomalies to display
+const MIN_SIGNIFICANT_ANOMALY_COUNT = 5; // Minimum points to consider an anomaly significant
+
+let gprAgentBtn = document.getElementById("gpr-agent-btn");
+let gprAgentPanel = document.getElementById("gpr-agent-panel");
+let gprPanelClose = document.getElementById("gpr-panel-close");
+let gprAgentActive = false;
+let anomalyMarkers = [];
+
+gprAgentBtn.onclick = function () {
+    if (!gprAgentActive) {
+        activateGPRAgent();
+    } else {
+        deactivateGPRAgent();
+    }
+};
+
+gprPanelClose.onclick = function () {
+    deactivateGPRAgent();
+};
+
+function activateGPRAgent() {
+    gprAgentActive = true;
+    gprAgentBtn.style.backgroundColor = "rgb(21, 142, 10)";
+    gprAgentPanel.style.display = "block";
+    analyzeGPRData();
+}
+
+function deactivateGPRAgent() {
+    gprAgentActive = false;
+    gprAgentBtn.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+    gprAgentPanel.style.display = "none";
+    
+    // Remove anomaly markers
+    anomalyMarkers.forEach(marker => {
+        if (marker.material && marker.material.map) {
+            marker.material.map.dispose();
+        }
+        if (marker.geometry) {
+            marker.geometry.dispose();
+        }
+        if (marker.material) {
+            marker.material.dispose();
+        }
+        scene.remove(marker);
+    });
+    anomalyMarkers.length = 0;
+}
+
+function analyzeGPRData() {
+    // Find the point cloud in the scene
+    let pointCloud = null;
+    for (const child of scene.children) {
+        if (child.type === "Points") {
+            pointCloud = child;
+            break;
+        }
+    }
+    
+    if (!pointCloud) {
+        document.getElementById("stat-total-points").textContent = "No data";
+        return;
+    }
+    
+    const positions = pointCloud.geometry.attributes.position;
+    const colors = pointCloud.geometry.attributes.color;
+    const totalPoints = positions.count;
+    
+    // Analyze intensity values
+    let sumIntensity = 0;
+    let highIntensityPoints = 0;
+    const anomalies = [];
+    
+    // Note: This algorithm has O(n²) complexity for large datasets.
+    // For production with large point clouds, consider using spatial data structures
+    // like octrees or k-d trees for more efficient proximity searches.
+    for (let i = 0; i < totalPoints; i++) {
+        const intensity = colors.getX(i);
+        sumIntensity += intensity;
+        
+        if (intensity >= HIGH_INTENSITY_THRESHOLD) {
+            highIntensityPoints++;
+            
+            // Group nearby high-intensity points as anomalies
+            const x = positions.getX(i);
+            const y = positions.getY(i);
+            const z = positions.getZ(i);
+            
+            // Check if this point is near an existing anomaly
+            let foundNearby = false;
+            for (let anomaly of anomalies) {
+                const dx = x - anomaly.x;
+                const dy = y - anomaly.y;
+                const dz = z - anomaly.z;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                
+                if (distance < ANOMALY_PROXIMITY_THRESHOLD) {
+                    anomaly.count++;
+                    anomaly.maxIntensity = Math.max(anomaly.maxIntensity, intensity);
+                    foundNearby = true;
+                    break;
+                }
+            }
+            
+            if (!foundNearby && anomalies.length < MAX_ANOMALIES) {
+                anomalies.push({ x, y, z, count: 1, maxIntensity: intensity });
+            }
+        }
+    }
+    
+    const avgIntensity = sumIntensity / totalPoints;
+    
+    // Update statistics display
+    document.getElementById("stat-total-points").textContent = totalPoints.toLocaleString();
+    document.getElementById("stat-avg-intensity").textContent = (avgIntensity * 100).toFixed(2) + "%";
+    document.getElementById("stat-high-intensity").textContent = highIntensityPoints.toLocaleString() + 
+        ` (${(highIntensityPoints / totalPoints * 100).toFixed(1)}%)`;
+    
+    // Filter significant anomalies
+    const significantAnomalies = anomalies.filter(a => a.count >= MIN_SIGNIFICANT_ANOMALY_COUNT);
+    document.getElementById("stat-anomalies").textContent = significantAnomalies.length;
+    
+    // Display anomaly list
+    const anomalyListDiv = document.getElementById("anomaly-list");
+    anomalyListDiv.innerHTML = "";
+    
+    if (significantAnomalies.length > 0) {
+        significantAnomalies.forEach((anomaly, index) => {
+            const anomalyDiv = document.createElement("div");
+            anomalyDiv.className = "anomaly-item";
+            anomalyDiv.textContent = `#${index + 1}: (${anomaly.x.toFixed(2)}, ${anomaly.y.toFixed(2)}, ${anomaly.z.toFixed(2)}) - Intensity: ${(anomaly.maxIntensity * 100).toFixed(1)}%`;
+            anomalyListDiv.appendChild(anomalyDiv);
+            
+            // Add visual marker at anomaly location
+            const markerGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            const markerMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff0000,
+                transparent: true,
+                opacity: 0.7
+            });
+            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            marker.position.set(anomaly.x, anomaly.y, anomaly.z);
+            scene.add(marker);
+            anomalyMarkers.push(marker);
+            
+            // Add label
+            const label = createBillboardText(`A${index + 1}`, 
+                new THREE.Vector3(anomaly.x, anomaly.y, anomaly.z + 0.08), 
+                null, 
+                0xff0000);
+            anomalyMarkers.push(label);
+        });
+    } else {
+        const noAnomalyDiv = document.createElement("div");
+        noAnomalyDiv.className = "anomaly-item";
+        noAnomalyDiv.textContent = "No significant anomalies detected";
+        anomalyListDiv.appendChild(noAnomalyDiv);
+    }
+}
+
 function getIntersections(event, _camera, L, R) {
     for (const child of scene.children) {
         if (child.type !== "Points") continue;
